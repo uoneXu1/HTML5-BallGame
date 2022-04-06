@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>BallGame-u1</title>
+    <style>
+
+.gametext{
+text-align: center;
+color:#FFFFFF;
+font-family:Microsoft JhengHei;
+background-color:#32CD32;
+font-size:10px;
+padding:6px 0px; 
+cursor:pointer;
+border-radius: 15px;
+}
+
+{padding: 0;margin: 0;}
+
+canvas{
+width:100%;
+//height=100px;
+background: #eee;
+display: bolck; 
+margin: auto;
+-webkit-user-select:none;
+-moz-user-select:none;
+-o-user-select:none;
+user-select:none;
+}
+
+#board_range{
+width:100%;
+height:100%;
+
+-webkit-appearance: none;
+outline : none;
+background:none;
+//position: relative;
+background:#95CACA;
+
+
+}
+
+
+    </style>
+</head>
+<body>
+
+<canvas width="" height="400" id="canvas">
+</canvas>
+
+<input type="range" id="board_range" width="1000" min="1" max="10" value="1" step="1" onchange ="board_changed(event);" oninput="board_input(event);"/>
+
+</br>
+
+<a id="logc">日誌：</a>
+
+</br>
+
+<a>控制台：</a>
+
+<div style="overflow_y:auto; background-color: #C9C9C9;">
+
+</div>
+
+
+<script>
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+
+var board_range = document.getElementById("board_range");
+
+//打印控制台/開發時方便調試
+function log(c){
+document.getElementById("logc"). innerHTML = ""+c;
+}
+
+
+//玩家
+player_count = 2;
+
+//分數
+p0_score = 0;
+p1_score = 0;
+win_score = 5;
+
+//球的基本數值
+var ball_count = 1;
+var ball_speed = 3;
+var ball_x = canvas.width/2;
+var ball_y = canvas.height-30;
+var ball_radius = 10;
+
+//球板的基本數值
+var board_count = 1;
+var board_color = 0;
+var board_color_ms = 0;
+var board_color_speed = 15;
+var board_width = 100;
+var board_height = 5;
+
+//殺球
+var killball_1_con = true;
+var killball_1_con = false;
+
+
+
+
+//玩家的陣列
+var player = [];
+function pde_player()
+{
+player[0] =[];
+player[1] =[];
+player[0] = {base_x: canvas.width/2, base_y:  0, hp: 3};
+player[1] = {base_x: canvas.width/2, base_y: canvas.height, hp: 3};
+}
+pde_player();
+
+//球的陣列
+var ball = [];
+function pde_ball()
+{
+for(var i=0;i<ball_count;i++)
+{
+    ball[i] = [];
+    ball[i] = {x:100, y:100, dx: ball_speed, dy: ball_speed, radius: 10};
+}
+}
+pde_ball();
+
+//球板的陣列
+var board = [];
+function pde_board()
+{
+board[0] = [];board[1] = [];
+//敵方球版
+board[0] = {con: 1, x: canvas.width/2-board_width/2, y: 5, width: board_width, height: board_height};
+//我方球版
+board[1] = {con: 1, x: canvas.width/2-board_width/2, y: canvas.height-board_height-5, width: board_width, height: board_height};
+
+}
+pde_board();
+
+//移動條設置
+board_range.max=canvas.width;
+board_range.value=board[1].x+board[1].width/2;
+
+//重置球
+function init_ball(num){
+
+if(num==0){
+
+for(i=0;i<ball.length;i++){
+ball[i].x=canvas.width/2;
+ball[i].y=canvas.height/2-100;
+ball[i].dx=-ball_speed;
+ball[i].dy=-ball_speed;
+}
+
+}
+
+if(num==1){
+
+for(i=0;i<ball.length;i++){
+ball[i].x=canvas.width/2;
+ball[i].y=canvas.height/2-100;
+
+ball[i].dx= ball_speed;
+ball[i].dy= ball_speed;
+
+}
+
+}
+
+}
+
+//球運行的邏輯
+function if_ball(){
+
+for(i=0;i<ball.length;i++){
+
+//碰撞牆壁
+if(ball[i].x+ball[i].dx>canvas.width-ball[i].radius || ball[i].x+ball[i].dx<ball[i].radius){
+ball[i].dx = -ball[i].dx;
+}
+
+//我方
+if(ball[i].y+ball[i].dy>canvas.height-ball[i].radius){
+p0_score++;
+init_ball(1);
+
+}
+
+//敵方
+if(ball[i].y+ball[i].dy<0-ball[i].radius){
+p1_score++;
+init_ball(0);
+
+}
+
+//球碰到球板
+for(a=0;a<board.length;a++){
+
+if(board[a].con == 1){
+
+//敵方判斷方式
+if(a == 0 && ball[i].x>board[a].x && ball[i].x<board[a].x+board[a].width && ball[i].y-ball[i].radius<board[a].y+board[a].height)
+{ball[i].dy+=1;ball[i].dy = -ball[i].dy;}
+
+//我方判斷方式
+if(a == 1 && ball[i].x>board[a].x && ball[i].x<board[a].x+board[a].width && ball[i].y+ball[i].radius>board[a].y)
+{ball[i].dy+=1;ball[i].dy = -ball[i].dy;}
+}
+
+//我方殺球
+if(killball_1_con ==true && a == 1 && ball[i].x>board[a].x && ball[i].x<board[a].x+board[a].width && ball[i].y+ball[i].radius>board[a].y)
+{ball[i].dy+=5;ball[i].dy = -ball[i].dy; killball_1_con=false;}
+
+
+}
+ball[i].x += ball[i].dx;
+ball[i].y += ball[i].dy;
+}
+
+} 
+
+function draw_map(){
+
+ctx.beginPath();
+ctx.rect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = "#A9A9A9";
+ctx.fill();
+ctx.closePath();
+
+//分數
+ctx.beginPath();
+ctx.font = "16px Arial";
+ctx.fillStyle = "#ffffff";
+score_text = ""+p1_score+" - "+p0_score+"";
+score_width = ctx.measureText(score_text).width;
+score_height = ctx.measureText(score_text).height;
+ctx.fillText(score_text, canvas.width/2-score_width/2, canvas.height/2-5);
+ctx.closePath();
+
+
+//左邊
+ctx.beginPath();
+ctx.strokeStyle = '#000000';
+ctx.lineWidth="1";
+ctx.moveTo(0,0);  
+ctx.lineTo(0,canvas.height);
+ctx. stroke();
+ctx.closePath(); 
+
+//中間
+ctx.beginPath();
+ctx.strokeStyle = '#000000';
+ctx.lineWidth="1";
+ctx.moveTo(0,canvas.height/2);  
+ctx.lineTo(canvas.width,canvas.height/2);
+ctx. stroke();
+ctx.closePath(); 
+
+//右邊
+ctx.beginPath();
+ctx.strokeStyle = '#000000';
+ctx.lineWidth="1";
+ctx.moveTo(canvas.width,0);  
+ctx.lineTo(canvas.width,canvas.height);
+ctx. stroke();
+ctx.closePath(); 
+
+}
+
+//單人模式 添加電腦對手
+function bot(){
+
+for(i=0;i<ball.length;i++){
+//當球距離小於100時
+if(ball[i].y-board[0].y<100){
+
+board[0].x = ball[i].x-board[0].width/2;
+
+}
+
+}
+
+}
+
+//遊戲邏輯
+function game_main(){
+
+if_ball();
+
+//電腦對手
+bot();
+
+}
+
+function killball_0(){
+
+board[0].y += 40;
+
+for(i=0;i<ball.length;i++){
+
+if(ball[i].x>board[0].x && ball[i].x<board[0].x+board[0].width && ball[i].y-ball[i].radius<board[0].y+board[0].height)
+{}
+}
+//球版回位
+setTimeout(function(){
+board[0].y -= 40;
+},200);
+}
+
+function killball_1(){
+//球板往前擊
+board[1].y -= 40;
+//變量殺球狀態
+killball_1_con = true;
+//球版回位
+setTimeout(function(){
+board[1].y += 40;
+},200);
+//變量殺球狀態false
+setTimeout(function(){
+
+killball_1_con = false;
+
+},300);
+
+}
+
+function board_input(event){
+log(event.target.value);
+board[1].x= event.target.value-board_width/2;
+}
+
+function board_changed(event){
+//殺球
+//killball_1();
+}
+
+
+canvas.ontouchstart = function (e) {
+// 開始觸控
+}
+
+canvas.ontouchmove = function (e) {
+log(1);
+// 開始滑動
+}
+
+canvas.ontouchend = function () {
+// 滑動結束
+log(2);
+}    
+
+
+function draw_ball(){
+
+for(i=0;i<ball.length;i++){
+ctx.beginPath();
+ctx.arc(ball[i].x, ball[i].y, ball[i].radius, 0, Math.PI*2);
+ctx.fillStyle = "#FF8800";
+ctx.fill();
+ctx.closePath();
+}
+
+}
+
+//清空canvas
+function canvas_clear(){
+ctx.clearRect(0, 0,canvas.width, canvas.height);
+}
+
+function get_color(num){
+
+if(num==0){return "#F08080"}
+
+if(num==1){return "#FFA07A"}
+
+if(num==2){return "#F0E68C	"}
+
+if(num==3){return "#90EE90"}
+
+if(num==4){return "#87CEFA"}
+
+if(num==5){return "#FFB6C1"}
+
+if(num==6){return "#9370DB"}
+
+}
+
+//繪製球板
+function draw_board(){
+
+ctx.beginPath();
+ctx.lineWidth = 2;
+ctx.rect(board[0].x, board[0].y, board[0].width, board[0].height);
+ctx.strokeStyle = "#ffffff";
+if(board_color_ms > board_color_speed){board_color++; board_color_ms=0;}
+else{board_color_ms++;}
+if(board_color > 6) {board_color = 0}
+
+ctx.fillStyle = get_color(board_color);
+ctx.stroke();
+ctx.fill();
+ctx.closePath();
+
+ctx.beginPath();
+ctx.lineWidth = 2;
+ctx.rect(board[1].x, board[1].y, board[1].width, board[1].height);
+ctx.strokeStyle = "#ffffff";
+
+if(board_color_ms > board_color_speed){board_color++; board_color_ms=0;}
+else{board_color_ms++;}
+if(board_color > 6) {board_color = 0}
+
+ctx.fillStyle = get_color(board_color);
+ctx.stroke();
+ctx.fill();
+ctx.closePath();
+
+}
+
+function draw(){
+
+ctx.clearRect(0, 0,canvas.width, canvas.height);
+
+draw_map();
+draw_ball();
+draw_board();
+game_main();
+
+}
+
+//繪製線程
+setInterval(draw, 10);
+
+
+
+</script>
+
+</body>
+</html>
